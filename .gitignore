@@ -1,0 +1,11 @@
+.gradle/
+.idea/
+local.properties
+**/build/
+node_modules/
+artifacts/runtime/
+*.iml
+signing/*.jks
+signing/*.keystore
+signing/*.properties
+backups/

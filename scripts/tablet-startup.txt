@@ -1,0 +1,25 @@
+let storageOk = true;
+        let storageLocked = false;
+        let recoveryRaw = null;
+        let startupNote = "";
+        let db;
+        try {
+          recoveryRaw = localStorage.getItem(STORE);
+          db = recoveryRaw ? BTData.validateDatabase(JSON.parse(recoveryRaw)) : initial();
+          if (BTPlatform.snapshot) {
+            try {
+              const copy = BTData.validateDatabase(JSON.parse(BTPlatform.snapshot));
+              if (!recoveryRaw || String(copy.savedAt || "") > String(db.savedAt || "")) {
+                db = copy;
+                localStorage.setItem(STORE, JSON.stringify(db));
+                startupNote = "Your records were recovered from the private on-device copy.";
+              }
+            } catch (ignored) { /* An invalid mirror must never replace valid local records. */ }
+          }
+        } catch (error) {
+          db = initial();
+          storageOk = false;
+          storageLocked = true;
+          startupNote = "Saved data could not be read. Existing records have been preserved. Export the recovery file, then restore a valid JSON backup.";
+        }
+        

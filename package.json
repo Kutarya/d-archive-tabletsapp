@@ -1,0 +1,16 @@
+{
+  "name": "bt-souvenirs-android-qa",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Local QA only; the APK has no Node or network dependency",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "qa": "node scripts/browser-qa.cjs",
+    "qa:customers": "node scripts/customer-book-qa.cjs"
+  },
+  "devDependencies": {
+    "acorn": "^8.19.0",
+    "playwright-core": "1.56.1",
+    "prettier": "^3.9.10"
+  }
+}

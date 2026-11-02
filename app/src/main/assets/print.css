@@ -1,0 +1,23 @@
+/* These rules apply only to the separate document WebView. */
+html, body { margin: 0 !important; padding: 0 !important; background: white !important; width: 210mm; }
+#document { width: 210mm; margin: 0; padding: 0; }
+.paper { width: 210mm !important; height: 296.8mm !important; min-height: 296.8mm !important;
+  margin: 0 !important; padding: 9mm 10mm 8mm; box-shadow: none !important; transform: none !important;
+  page-break-after: always; break-after: page; overflow: visible; }
+.paper:last-child { page-break-after: auto; break-after: auto; }
+.paper > * { flex-shrink: 0; }
+.paper .p-flex-space { flex: 1 1 auto; min-height: 5mm; }
+.paper .lines { table-layout: fixed; }
+.paper .lines th:first-child { width: 35%; }
+.paper .lines td, .paper .lines th { overflow-wrap: anywhere; }
+.paper .lines td:not(:first-child) { font-variant-numeric: tabular-nums; }
+.paper .supplier-top { grid-template-columns: minmax(0, 46%) minmax(0, 1fr); }
+.paper .p-value { max-width: none; overflow-wrap: anywhere; }
+.paper .p-last { gap: 10px; }
+.paper .p-last span:last-child { white-space: nowrap; }
+.paper .p-head, .paper .p-grid, .paper tr, .paper .recap, .paper .p-signatures { break-inside: avoid; }
+@page { size: A4 portrait; margin: 0; }
+@media print {
+  body > #document { display: block !important; }
+  .paper { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

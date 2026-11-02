@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#132644" />
+    <title>BT Souvenirs · Issue Slip Studio</title>
+    <link rel="icon" href="bt-souvenirs-logo.jpg">
+    <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="tablet.css">
+</head>
+
+<body>
+    <div class="app">
+        <aside class="aside">
+            <div class="logo">
+                <img id="sidebar-brand-logo" class="brand-logo" src="bt-souvenirs-logo.jpg" width="478" height="233" alt="BT Souvenirs – original logo" />
+            </div>
+            <div class="nav-label">WORKSPACE</div>
+            <button class="nav" data-page="slips">
+          <span class="glyph">▤</span
+          ><span class="nav-text">Issue slips</span></button
+        ><button class="nav" data-page="editor">
+          <span class="glyph">＋</span
+          ><span class="nav-text">New issue slip</span></button
+        ><button class="nav" data-page="customers">
+          <span class="glyph">♙</span
+          ><span class="nav-text">Customers</span></button
+        ><button class="nav" data-page="products">
+          <span class="glyph">▦</span
+          ><span class="nav-text">Products & categories</span>
+        </button>
+            <div class="nav-label">PREFERENCES</div>
+            <button class="nav" data-page="settings">
+          <span class="glyph">⚙</span
+          ><span class="nav-text">Settings & backup</span>
+        </button>
+            <div class="nav-bottom">
+                Saved locally on this device.<br />Export backups regularly.
+            </div>
+        </aside>
+        <main class="main">
+            <div class="top">
+                <div>
+                    <strong class="company" id="company-name"></strong><br /><small>Issue slips · Offline workspace</small
+            >
+          </div>
+          <span class="badge" id="storage-indicator">● Local memory</span>
+        </div>
+        <div class="content" id="content"></div>
+      </main>
+    </div>
+    <nav class="mobile-nav" id="mobile-nav">
+      <button data-page="slips"><span>▤</span>Slips</button
+      ><button data-page="editor"><span>＋</span>New slip</button
+      ><button data-page="customers"><span>♙</span>Customers</button
+      ><button data-page="products"><span>▦</span>Catalog</button
+      ><button data-page="settings"><span>⚙</span>Settings</button>
+    </nav>
+    <div id="modal-root"></div>
+    <div id="print-layer" class="modal-cover hide"></div>
+    <div id="toast-root"></div>
+    <input
+      type="file"
+      id="backup-upload"
+      class="file-input"
+      accept="application/json,.json"
+    /><input
+      type="file"
+      id="xml-upload"
+      class="file-input"
+      accept="text/xml,application/xml,.xml"
+    />
+    <input type="file" id="customer-upload" class="file-input" accept="application/json,application/xml,text/xml,.json,.xml">
+<script src="platform.js"></script>
+<script src="data-safety.js"></script>
+<script src="customer-book.js"></script>
+<script src="app.js"></script>
+</body>
+
+</html>

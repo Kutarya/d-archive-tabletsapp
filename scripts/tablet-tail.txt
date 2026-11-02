@@ -1,0 +1,133 @@
+function replaceDatabase(replacement) {
+          const previous = db;
+          const wasLocked = storageLocked;
+          try {
+            BTData.validateDatabase(replacement);
+            localStorage.setItem(STORE + ".before-replace", wasLocked ? recoveryRaw || JSON.stringify(previous) : JSON.stringify(previous));
+            db = stripCatalogPrices(clone(replacement));
+            storageLocked = false;
+            if (!persist()) { db = previous; storageLocked = wasLocked; return false; }
+            ui.draft = clone(db.workingDraft || newDraft());
+            ui.editId = db.docs.some(doc => doc.id === ui.draft.id) ? ui.draft.id : null;
+            ui.page = "slips";
+            ui.step = 0;
+            document.getElementById("storage-warning")?.remove();
+            return true;
+          } catch (error) {
+            db = previous;
+            storageLocked = wasLocked;
+            toast("Could not replace data: " + error.message + ". Export your records and retry.");
+            return false;
+          }
+        }
+        function importBackupText(text) {
+          try {
+            const data = BTData.validateDatabase(JSON.parse(text.replace(/^\uFEFF/, "")));
+            ask("Restore backup?", "Current data will be replaced. A local recovery copy will be kept before restoring.", "Restore", () => {
+              if (replaceDatabase(data)) { checkpoint(); render(); toast("Backup restored."); }
+            });
+          } catch (error) { toast("Could not restore: " + error.message); }
+        }
+        function importCustomerBook(text) {
+          if (text.trim().startsWith("<")) { importCustomersXml(text); return; }
+          try {
+            if (storageLocked) throw Error("Restore the protected database before adding customers.");
+            const incoming = BTCustomers.decode(text);
+            const result = BTCustomers.merge(db.customers, incoming);
+            ask("Import customer book?", `${result.added} new customers and ${result.updated} matching customers. Existing customers, delivery locations and issue slips will be kept.`, "Import customers", () => {
+              const previous = db.customers;
+              try { localStorage.setItem(STORE + ".customers-before-import", JSON.stringify(previous)); }
+              catch (error) { toast("Could not preserve the previous customer book. Export it and retry."); return; }
+              db.customers = result.customers;
+              if (!persist()) { db.customers = previous; return; }
+              ui.search = ""; render();
+              toast(`${result.added} customers added, ${result.updated} updated. Customer book saved.`);
+            });
+          } catch (error) { toast("Could not import customers: " + error.message); }
+        }
+        async function openNativeImport(kind) {
+          try {
+            const result = await BTPlatform.openText(kind);
+            if (result.cancelled) return;
+            if (kind === "json") importBackupText(result.text);
+            else if (kind === "xml") importCustomersXml(result.text);
+            else importCustomerBook(result.text);
+          } catch (error) { toast("Could not import: " + error.message); }
+        }
+        for (const [id, kind] of [["backup-upload", "json"], ["xml-upload", "xml"], ["customer-upload", "customers"]]) {
+          document.getElementById(id).addEventListener("change", async event => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            try {
+              if (file.size > 16 * 1024 * 1024) throw Error("File exceeds 16 MB.");
+              const text = await file.text();
+              if (kind === "json") importBackupText(text);
+              else if (kind === "xml") importCustomersXml(text);
+              else importCustomerBook(text);
+            } catch (error) { toast("Could not import: " + error.message); }
+            event.target.value = "";
+          });
+        }
+        window.BTApp = {
+          checkpoint,
+          handleBack() {
+            if (!document.getElementById("print-layer").classList.contains("hide")) { closePreview(); return "handled"; }
+            if (ui.pickerOpen) { closeCustomerPicker(); return "handled"; }
+            if (ui.modal) {
+              const form = document.getElementById("modal-form");
+              const dirty = form && [...form.elements].some(element => element.value !== element.defaultValue && element.tagName === "INPUT");
+              if (!dirty || window.confirm("Close this form without saving its changes?")) closeModal();
+              return "handled";
+            }
+            if (ui.page !== "editor") { togglePage("editor"); return "handled"; }
+            if (ui.step > 0) { stepTo(ui.step - 1); return "handled"; }
+            return checkpoint() ? "exit" : "blocked";
+          },
+        };
+        document.addEventListener("visibilitychange", () => { if (document.hidden) checkpoint(); });
+        window.addEventListener("pagehide", checkpoint);
+        document.addEventListener("focusin", event => {
+          if (event.target.matches("input, textarea, select")) setTimeout(() => {
+            if (document.activeElement === event.target) event.target.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+          }, 250);
+        });
+        window.addEventListener("bt-storage-error", event => {
+          document.getElementById("storage-indicator").textContent = "● Local save · private copy failed";
+          toast("Private recovery copy could not be updated: " + event.detail + ". Export a JSON backup.");
+        });
+        ui.draft = clone(db.workingDraft || newDraft());
+        const workspace = db.workspaceState;
+        if (workspace && ["editor", "slips", "customers", "products", "settings"].includes(workspace.page)) {
+          ui.page = workspace.page;
+          ui.step = Math.max(0, Math.min(3, Number(workspace.step) || 0));
+          ui.editId = db.docs.some(doc => doc.id === ui.draft.id) ? ui.draft.id : null;
+        }
+        render();
+        if (storageLocked || BTPlatform.startupError) {
+          const warning = document.createElement("div");
+          warning.id = "storage-warning";
+          warning.className = "storage-warning";
+          warning.innerHTML = `<p>${safe(startupNote || BTPlatform.startupError)}</p>`;
+          if (storageLocked) {
+            const exportButton = document.createElement("button");
+            exportButton.className = "btn";
+            exportButton.textContent = "Export recovery file";
+            exportButton.onclick = () => download(`bt-recovery-${today()}.json`, recoveryRaw || "{}");
+            warning.append(exportButton);
+            const restore = document.createElement("button");
+            restore.className = "btn";
+            restore.textContent = "Restore JSON backup";
+            restore.onclick = () => BTPlatform.native ? openNativeImport("json") : document.getElementById("backup-upload").click();
+            warning.append(restore);
+            if (BTPlatform.snapshot) {
+              const recover = document.createElement("button");
+              recover.className = "btn";
+              recover.textContent = "Recover private copy";
+              recover.onclick = () => importBackupText(BTPlatform.snapshot);
+              warning.append(recover);
+            }
+          }
+          document.querySelector(".main").prepend(warning);
+        } else if (startupNote) toast(startupNote);
+        if (!storageOk) document.getElementById("storage-indicator").textContent = "● Records protected · recovery required";
+})();
